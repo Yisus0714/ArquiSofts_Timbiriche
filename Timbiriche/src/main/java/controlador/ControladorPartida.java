@@ -10,6 +10,7 @@ public class ControladorPartida implements FuenteDeJugadas {
         this.modelo = modelo;
     }
 
+    //Método obtenido del contrato con la interfaz FuenteDeJugadas
     @Override
     public void alJugar(int jugadorId,
                         boolean horizontal,
