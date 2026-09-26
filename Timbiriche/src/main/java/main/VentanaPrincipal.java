@@ -28,6 +28,8 @@ public class VentanaPrincipal extends JFrame implements Observador {
                 SwingConstants.CENTER
         );
 
+        // Botón temporal para validar el flujo
+        // Vista -> Controlador -> Modelo -> Observer -> Vistas
         JButton btnJugar = new JButton("Simular jugada");
 
         btnJugar.addActionListener(e -> {
@@ -36,9 +38,9 @@ public class VentanaPrincipal extends JFrame implements Observador {
 
                 fuenteDeJugadas.alJugar(
                         jugadorLocalId,
-                        true,
-                        0,
-                        0
+                        true, // temporal: orientación horizontal
+                        0,             // temporal: fila
+                        0              // temporal: columna
                 );
             }
         });
@@ -57,6 +59,10 @@ public class VentanaPrincipal extends JFrame implements Observador {
 
     @Override
     public void alCambiarPartida(EstadoPartida estado) {
+
+        if (estado == null) {
+            return;
+        }
 
         lblEstado.setText(
                 "Actualización recibida. Turno: "

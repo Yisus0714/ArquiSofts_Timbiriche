@@ -77,6 +77,12 @@ public class Ensamblador {
         private final List<Observador> observadores =
                 new ArrayList<>();
 
+        private final List<Jugador> jugadores =
+                new ArrayList<>();
+
+        private final TableroLectura tablero =
+                new TableroTemporal();
+
         public void agregarObservador(
                 Observador observador) {
 
@@ -92,8 +98,8 @@ public class Ensamblador {
 
             EstadoPartida estado =
                     new EstadoPartida(
-                            new TableroTemporal(),
-                            new ArrayList<Jugador>(),
+                            tablero,
+                            jugadores,
                             jugadorId,
                             false,
                             null
