@@ -1,9 +1,13 @@
 package integracion;
+
 import controlador.ControladorPartida;
 import controlador.FuenteDeJugadas;
 import eventos.EstadoPartida;
 import eventos.Observador;
-import modelo.IOperacionesPartida;
+import modelo.IOperacionesJuego;
+import modelo.IReceptorEstadoPartida;
+import modelo.ModeloPartida;
+import modelo.jugador.Jugador;
 import modelo.tablero.TableroLectura;
 import org.junit.jupiter.api.Test;
 
@@ -12,23 +16,115 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Prueba de integración del flujo completo de una jugada
+ * usando la arquitectura MVC actual.
+ *
+ * Se valida el recorrido:
+ *
+ * Vista
+ * -> Controlador
+ * -> Modelo MVC
+ * -> Modelo general del juego
+ * -> Modelos MVC
+ * -> Observer
+ * -> Vistas
+ *
+ * IMPORTANTE:
+ * Se utilizan las clases reales ControladorPartida y ModeloPartida.
+ * La Vista y el modelo general son falsos porque todavía no tenemos
+ * integradas sus implementaciones definitivas.
+ *
+ * Este flujo puede servir después como base para el
+ * diagrama de secuencia de diseño.
+ */
 public class FlujoCompletoMVCTest {
 
+    /**
+     * Comprueba que una jugada iniciada desde la Vista del jugador 1
+     * recorra toda la estructura y termine actualizando ambas Vistas.
+     */
     @Test
     void unaJugadaDebeActualizarAmbasVistas() {
 
-        ModeloObservableFalso modelo = new ModeloObservableFalso();
+        // ==========================================
+        // 1. Crear modelo general falso
+        // ==========================================
 
-        ControladorPartida controladorJugador1 = new ControladorPartida();
-        controladorJugador1.setModelo(modelo);
+        JuegoFalso juego =
+                new JuegoFalso();
 
-        VistaFalsa vistaJugador1 = new VistaFalsa();
-        VistaFalsa vistaJugador2 = new VistaFalsa();
 
-        vistaJugador1.setFuenteDeJugadas(controladorJugador1);
+        // ==========================================
+        // 2. Crear Modelos MVC
+        // ==========================================
 
-        modelo.agregarObservador(vistaJugador1);
-        modelo.agregarObservador(vistaJugador2);
+        ModeloPartida modeloJugador1 =
+                new ModeloPartida();
+
+        ModeloPartida modeloJugador2 =
+                new ModeloPartida();
+
+        modeloJugador1.setJuego(juego);
+        modeloJugador2.setJuego(juego);
+
+
+        // ==========================================
+        // 3. Crear Controlador del jugador 1
+        // ==========================================
+
+        ControladorPartida controladorJugador1 =
+                new ControladorPartida();
+
+        controladorJugador1.setModelo(
+                modeloJugador1
+        );
+
+
+        // ==========================================
+        // 4. Crear Vistas falsas
+        // ==========================================
+
+        VistaFalsa vistaJugador1 =
+                new VistaFalsa();
+
+        VistaFalsa vistaJugador2 =
+                new VistaFalsa();
+
+        vistaJugador1.setFuenteDeJugadas(
+                controladorJugador1
+        );
+
+
+        // ==========================================
+        // 5. Observer: Modelo MVC -> Vista
+        // ==========================================
+
+        modeloJugador1.agregarObservador(
+                vistaJugador1
+        );
+
+        modeloJugador2.agregarObservador(
+                vistaJugador2
+        );
+
+
+        // ==========================================
+        // 6. Modelo general -> Modelos MVC
+        // ==========================================
+
+        juego.agregarReceptorEstado(
+                modeloJugador1
+        );
+
+        juego.agregarReceptorEstado(
+                modeloJugador2
+        );
+
+
+        // ==========================================
+        // 7. Simular jugada desde Vista 1
+        // ==========================================
 
         vistaJugador1.simularJugada(
                 1,
@@ -37,11 +133,31 @@ public class FlujoCompletoMVCTest {
                 3
         );
 
+
+        // ==========================================
+        // 8. Validar resultado
+        // ==========================================
+
         assertTrue(vistaJugador1.fueNotificada);
         assertTrue(vistaJugador2.fueNotificada);
 
         assertNotNull(vistaJugador1.estadoRecibido);
         assertNotNull(vistaJugador2.estadoRecibido);
+
+        assertSame(
+                juego.getUltimoEstado(),
+                modeloJugador1.getEstado()
+        );
+
+        assertSame(
+                juego.getUltimoEstado(),
+                modeloJugador2.getEstado()
+        );
+
+        assertEquals(
+                1,
+                vistaJugador1.estadoRecibido.getJugadorEnTurno()
+        );
 
         assertEquals(
                 vistaJugador1.estadoRecibido.getJugadorEnTurno(),
@@ -49,21 +165,31 @@ public class FlujoCompletoMVCTest {
         );
     }
 
-    private static class VistaFalsa implements Observador {
+
+    /**
+     * Vista falsa utilizada para iniciar la jugada
+     * y comprobar que recibió la notificación final.
+     */
+    private static class VistaFalsa
+            implements Observador {
 
         private FuenteDeJugadas fuenteDeJugadas;
 
-        boolean fueNotificada;
-        EstadoPartida estadoRecibido;
+        private boolean fueNotificada;
+        private EstadoPartida estadoRecibido;
 
-        public void setFuenteDeJugadas(FuenteDeJugadas fuenteDeJugadas) {
-            this.fuenteDeJugadas = fuenteDeJugadas;
+        public void setFuenteDeJugadas(
+                FuenteDeJugadas fuenteDeJugadas) {
+
+            this.fuenteDeJugadas =
+                    fuenteDeJugadas;
         }
 
-        public void simularJugada(int jugadorId,
-                                  boolean horizontal,
-                                  int fila,
-                                  int col) {
+        public void simularJugada(
+                int jugadorId,
+                boolean horizontal,
+                int fila,
+                int col) {
 
             fuenteDeJugadas.alJugar(
                     jugadorId,
@@ -74,59 +200,98 @@ public class FlujoCompletoMVCTest {
         }
 
         @Override
-        public void alCambiarPartida(EstadoPartida estado) {
-            this.fueNotificada = true;
-            this.estadoRecibido = estado;
+        public void alCambiarPartida(
+                EstadoPartida estado) {
+
+            fueNotificada = true;
+            estadoRecibido = estado;
         }
     }
 
-    private static class ModeloObservableFalso
-            implements IOperacionesPartida {
 
-        private final List<Observador> observadores =
+    /**
+     * Sustituto temporal del modelo general del juego.
+     *
+     * Recibe las jugadas desde los Modelos MVC y entrega
+     * el nuevo EstadoPartida a todos los receptores registrados.
+     *
+     * No contiene reglas reales de Timbiriche.
+     */
+    private static class JuegoFalso
+            implements IOperacionesJuego {
+
+        private final List<IReceptorEstadoPartida> receptores =
                 new ArrayList<>();
 
-        public void agregarObservador(Observador observador) {
-            observadores.add(observador);
+        private final List<Jugador> jugadores =
+                new ArrayList<>();
+
+        private final TableroLectura tablero =
+                new TableroFalso();
+
+        private EstadoPartida ultimoEstado;
+
+        public void agregarReceptorEstado(
+                IReceptorEstadoPartida receptor) {
+
+            receptores.add(receptor);
         }
 
         @Override
-        public void jugar(int jugadorId,
-                          boolean horizontal,
-                          int fila,
-                          int col) {
+        public void jugar(
+                int jugadorId,
+                boolean horizontal,
+                int fila,
+                int col) {
 
-            EstadoPartida estado = new EstadoPartida(
-                    new TableroFalso(),
-                    new ArrayList<>(),
-                    jugadorId,
-                    false,
-                    null
-            );
+            ultimoEstado =
+                    new EstadoPartida(
+                            tablero,
+                            jugadores,
+                            jugadorId,
+                            false,
+                            null
+                    );
 
-            for (Observador observador : observadores) {
-                observador.alCambiarPartida(estado);
+            for (IReceptorEstadoPartida receptor : receptores) {
+                receptor.actualizarEstado(
+                        ultimoEstado
+                );
             }
+        }
+
+        public EstadoPartida getUltimoEstado() {
+            return ultimoEstado;
         }
     }
 
+
+    /**
+     * Tablero mínimo utilizado únicamente para construir
+     * EstadoPartida durante esta prueba.
+     */
     private static class TableroFalso
             implements TableroLectura {
 
         @Override
         public int puntosPorLado() {
-            return 10;
+            return 3;
         }
 
         @Override
-        public boolean lineaTrazada(boolean horizontal,
-                                    int fila,
-                                    int col) {
+        public boolean lineaTrazada(
+                boolean horizontal,
+                int fila,
+                int col) {
+
             return false;
         }
 
         @Override
-        public int duenoDelCuadro(int fila, int col) {
+        public int duenoDelCuadro(
+                int fila,
+                int col) {
+
             return 0;
         }
 
@@ -137,7 +302,7 @@ public class FlujoCompletoMVCTest {
 
         @Override
         public int totalCuadros() {
-            return 81;
+            return 4;
         }
     }
 }

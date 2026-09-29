@@ -109,13 +109,12 @@ public class Ensamblador {
 
 
         // ==========================================
-        // 7. Vista -> Controlador
+        // 7. Asociaciones de la Vista
         // ==========================================
 
         /*
-         * La Vista envía las acciones del usuario al Controlador.
-         *
-         * No existe una relación Controlador -> Vista.
+         * Vista -> Controlador:
+         * la Vista envía acciones mediante FuenteDeJugadas.
          */
         vistaJugador1.setFuenteDeJugadas(
                 controladorJugador1
@@ -126,11 +125,8 @@ public class Ensamblador {
         );
 
         /*
-         * La Vista también conoce su Modelo MVC mediante
-         * una interfaz de consulta.
-         *
-         * Esto permite que la Vista lea el estado que debe mostrar
-         * cuando recibe una notificación por Observer.
+         * Vista -> Modelo MVC:
+         * la Vista consulta información mediante IConsultaModeloPartida.
          */
 
         vistaJugador1.setModelo(modeloJugador1);

@@ -13,6 +13,23 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+/**
+ * Prueba de integración de la sincronización entre dos MVC.
+ *
+ * Se valida que dos Modelos MVC independientes, conectados al mismo
+ * modelo general del juego, reciban el mismo EstadoPartida después
+ * de una jugada.
+ *
+ * Este test representa la arquitectura:
+ *
+ * ModeloPartida1 -> modelo general
+ * ModeloPartida2 -> modelo general
+ *
+ * modelo general -> ModeloPartida1
+ * modelo general -> ModeloPartida2
+ *
+ * No se prueban aquí reglas reales de Timbiriche.
+ */
 class SincronizacionDosMVCTest {
 
     /**

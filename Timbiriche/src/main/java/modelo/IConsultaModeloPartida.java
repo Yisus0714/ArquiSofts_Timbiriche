@@ -11,11 +11,11 @@ import eventos.EstadoPartida;
  *
  * IMPORTANTE:
  * Este Modelo MVC no es el modelo general del juego (Dominio).
- * El Modelo MVC representa la información que necesita la interfaz
- * de un jugador.
+ * El Modelo MVC representa el estado que necesita la Vista
+ * correspondiente a un jugador.
  *
  * En UML:
- * - Se representará como una <<interface>>.
+ * - Se representará como <<interface>>.
  * - VentanaPrincipal tendrá una dependencia hacia esta interfaz.
  * - ModeloPartida será la clase que implemente este contrato.
  */

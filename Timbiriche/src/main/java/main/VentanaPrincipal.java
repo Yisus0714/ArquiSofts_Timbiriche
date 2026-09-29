@@ -56,10 +56,11 @@ public class VentanaPrincipal extends JFrame implements Observador {
         );
 
         /*
-         * Botón temporal utilizado únicamente para validar
-         * el flujo de una jugada.
+         * Elemento temporal de prueba.
          *
-         * Vista -> Controlador -> Modelo MVC -> Modelo general
+         * Será sustituido por la interacción real con PanelTablero,
+         * donde la posición seleccionada por el jugador se convertirá
+         * en orientación, fila y columna.
          */
         JButton btnJugar = new JButton("Simular jugada");
 
@@ -113,11 +114,15 @@ public class VentanaPrincipal extends JFrame implements Observador {
     /**
      * Método invocado mediante Observer cuando cambia el Modelo MVC.
      *
-     * Aunque el contrato actual de Observador todavía recibe
-     * EstadoPartida como parámetro, la Vista consulta su propio
-     * Modelo MVC para obtener el estado que debe mostrar.
+     * El contrato Observador actualmente recibe EstadoPartida como
+     * parámetro porque así fue definido originalmente por el equipo.
      *
-     * De esta forma practicamos el flujo indicado por el maestro:
+     * Sin embargo, en esta versión la Vista no utiliza directamente
+     * ese parámetro. La notificación solamente indica que hubo un cambio
+     * y la Vista consulta el estado actual mediante
+     * IConsultaModeloPartida.
+     *
+     * Esto aproxima el flujo al esquema trabajado en clase:
      *
      * Modelo -> notifica -> Vista
      * Vista -> consulta -> Modelo

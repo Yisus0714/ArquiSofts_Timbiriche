@@ -11,11 +11,25 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+/**
+ * Pruebas del Modelo MVC de una partida.
+ *
+ * Se valida que ModeloPartida:
+ * - conserve el estado recibido desde el modelo general;
+ * - notifique a sus observadores cuando ese estado cambia.
+ *
+ * Este test representa el camino de regreso:
+ *
+ * Modelo general -> ModeloPartida -> Observer -> Vista
+ *
+ * No se prueban aquí reglas reales del Timbiriche.
+ */
 class ModeloPartidaTest {
 
     /**
-     * Prueba que ModeloPartida conserve el estado recibido
-     * y notifique al observador registrado.
+     * Comprueba que actualizarEstado():
+     * 1. guarde el EstadoPartida recibido;
+     * 2. notifique al Observador registrado con ese mismo estado.
      */
     @Test
     void actualizarEstadoGuardaYNotifica() {

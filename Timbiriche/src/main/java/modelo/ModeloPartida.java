@@ -71,10 +71,10 @@ public class ModeloPartida
     }
 
     /**
-     * Notifica a las Vistas registradas que el estado cambió.
+     * Notifica a los observadores registrados que el estado cambió.
      *
-     * Este método forma parte de la implementación interna de Observer,
-     * por eso no necesariamente tiene que aparecer en el UML público.
+     * Normalmente el observador será la Vista correspondiente
+     * a este Modelo MVC.
      */
     private void notificarObservadores() {
         for (Observador observador : observadores) {
