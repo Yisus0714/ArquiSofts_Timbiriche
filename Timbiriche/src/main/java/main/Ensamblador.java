@@ -125,6 +125,18 @@ public class Ensamblador {
                 controladorJugador2
         );
 
+        /*
+         * La Vista también conoce su Modelo MVC mediante
+         * una interfaz de consulta.
+         *
+         * Esto permite que la Vista lea el estado que debe mostrar
+         * cuando recibe una notificación por Observer.
+         */
+
+        vistaJugador1.setModelo(modeloJugador1);
+        vistaJugador2.setModelo(modeloJugador2);
+
+
 
         // ==========================================
         // 8. Observer: Modelo MVC -> Vista
