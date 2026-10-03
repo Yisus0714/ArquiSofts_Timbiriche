@@ -11,14 +11,12 @@ import java.awt.geom.RoundRectangle2D;
 
 public class TarjetaJugador extends JPanel {
 
-    // Componentes dinamicos
     private final JLabel lblNombre;
     private final JLabel lblContadorCuadros;
     private final JPanel pnlIndicadorTurno;
     private final JLabel lblTextoTurno;
     private final JLabel lblAvatar;
 
-    // Propiedades de estado
     private Color colorJugador;
     private boolean esSuTurno;
 
@@ -34,7 +32,6 @@ public class TarjetaJugador extends JPanel {
         this.colorJugador = color;
         this.esSuTurno = false;
 
-        // Configuracion del panel base
         setLayout(new BorderLayout(12, 0));
         setBackground(Color.WHITE);
         setBorder(BorderFactory.createCompoundBorder(
@@ -43,9 +40,7 @@ public class TarjetaJugador extends JPanel {
         ));
         setPreferredSize(new Dimension(320, 90));
 
-        // ---------------------------------------------------------------------
-        // 1. SECCION IZQUIERDA: AVATAR
-        // ---------------------------------------------------------------------
+
         lblAvatar = new JLabel();
         lblAvatar.setPreferredSize(new Dimension(60, 60));
         lblAvatar.setHorizontalAlignment(SwingConstants.CENTER);
@@ -53,7 +48,6 @@ public class TarjetaJugador extends JPanel {
         if (iconAvatar != null) {
             lblAvatar.setIcon(iconAvatar);
         } else {
-            // Placeholder gris claro para el avatar en la tarjeta blanca
             lblAvatar.setOpaque(true);
             lblAvatar.setBackground(colorJugador);
             lblAvatar.setForeground(new Color(60, 64, 72));
@@ -61,9 +55,7 @@ public class TarjetaJugador extends JPanel {
             lblAvatar.setFont(new Font("SansSerif", Font.BOLD, 22));
         }
 
-        // ---------------------------------------------------------------------
-        // 2. SECCION CENTRO: NOMBRE E INDICADOR "SU TURNO"
-        // ---------------------------------------------------------------------
+
         JPanel pnlCentro = new JPanel();
         pnlCentro.setLayout(new BoxLayout(pnlCentro, BoxLayout.Y_AXIS));
         pnlCentro.setOpaque(false);
@@ -73,7 +65,6 @@ public class TarjetaJugador extends JPanel {
         lblNombre.setForeground(new Color(30, 32, 38));
         lblNombre.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Badge para el indicador "SU TURNO"
         pnlIndicadorTurno = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 2)) {
             @Override
             protected void paintComponent(Graphics g) {
@@ -98,9 +89,6 @@ public class TarjetaJugador extends JPanel {
         pnlCentro.add(pnlIndicadorTurno);
         pnlCentro.add(Box.createVerticalGlue());
 
-        // ---------------------------------------------------------------------
-        // 3. SECCION DERECHA: CONTADOR DE CUADROS
-        // ---------------------------------------------------------------------
         JPanel pnlCuadros = new JPanel();
         pnlCuadros.setLayout(new BoxLayout(pnlCuadros, BoxLayout.Y_AXIS));
         pnlCuadros.setOpaque(false);
@@ -129,9 +117,7 @@ public class TarjetaJugador extends JPanel {
         actualizarEstadoTurno();
     }
 
-    // =========================================================================
-    // METODOS DE ACTIVACION Y CONTROL
-    // =========================================================================
+
 
     public void setEsSuTurno(boolean esSuTurno) {
         this.esSuTurno = esSuTurno;
