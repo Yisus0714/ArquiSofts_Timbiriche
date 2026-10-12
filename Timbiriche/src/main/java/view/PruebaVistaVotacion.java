@@ -32,7 +32,7 @@ public class PruebaVistaVotacion {
             btnAbandono.addActionListener(e -> {
                 DialogoConfirmarAbandono dialogo = new DialogoConfirmarAbandono(ventana);
 
-                // Solo para la prueba: ambos botones cierran el diálogo.
+                // Solo para la prueba: ambos botones cierran el diálogo..
                 dialogo.getBtnCancelar().addActionListener(x -> dialogo.cerrar());
                 dialogo.getBtnConfirmar().addActionListener(x -> dialogo.cerrar());
 

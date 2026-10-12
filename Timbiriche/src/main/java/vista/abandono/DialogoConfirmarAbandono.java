@@ -60,8 +60,8 @@ public class DialogoConfirmarAbandono extends JDialog {
         pack();
         setLocationRelativeTo(padre);
 
-        // TODO (Controlador): btnConfirmar.addActionListener(...) -> notificar abandono al dominio
-        // TODO (Controlador): btnCancelar.addActionListener(...)  -> cerrar el diálogo y seguir jugando
+        // TODO (Controlador): btnConfirmar.addActionListener(...) -> notificar abandono al dominio.
+        // TODO (Controlador): btnCancelar.addActionListener(...)  -> cerrar el diálogo y seguir jugando.
     }
 
     public JButton getBtnConfirmar() {

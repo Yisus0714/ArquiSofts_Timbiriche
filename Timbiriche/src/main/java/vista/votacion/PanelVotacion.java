@@ -288,7 +288,7 @@ public class PanelVotacion extends JPanel {
         pildora.setBorder(new EmptyBorder(5, 14, 5, 14));
         return pildora;
     }
-
+//s
     private static void setConteo(JLabel pildora, String etiqueta, int votos) {
         pildora.setText("<html><font color='#2F65E8'>●</font>&nbsp; "
                 + etiqueta + ": <b>" + votos + "</b></html>");
