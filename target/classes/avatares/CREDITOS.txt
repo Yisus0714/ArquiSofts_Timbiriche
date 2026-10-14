@@ -1,0 +1,5 @@
+Avatares (tortuga, delfin, lobo, oso)
+Origen: Twemoji (https://github.com/jdecked/twemoji), graficos de Twitter, Inc. y otros colaboradores.
+Licencia: Creative Commons Attribution 4.0 International (CC-BY 4.0) - https://creativecommons.org/licenses/by/4.0/
+Cambios realizados: se rasterizaron los SVG originales a PNG de 256x256 px y se renombraron
+(1f422 -> tortuga, 1f42c -> delfin, 1f43a -> lobo, 1f43b -> oso).
