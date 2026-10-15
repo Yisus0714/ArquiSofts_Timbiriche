@@ -6,6 +6,8 @@ package View;
 
 import Control.ControlFinal;
 import Model.IConsultaFinal;
+import Model.ObserverModelo;
+import eventos.Event;
 import dto.JugadorFinalDTO;
 
 import javax.swing.*;
@@ -20,7 +22,7 @@ import java.util.List;
  *
  * @author luisb
  */
-public class VistaFinal extends JFrame {
+public class VistaFinal extends JFrame implements ObserverModelo {
 
     private static final Color FONDO = new Color(248, 250, 252);
     private static final Color TEXTO = new Color(15, 23, 42);
@@ -35,12 +37,23 @@ public class VistaFinal extends JFrame {
         this.consulta = consulta;
 
         setTitle("Timbiriche - Resultados Finales");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLocationRelativeTo(null);
         getContentPane().setBackground(FONDO);
 
-        initUI();
+        // Nace oculta: se arma y se muestra cuando el modelo avisa que ya hay resultados.
+    }
+
+    @Override
+    public void actualizar(Event evento) {
+        if (evento == Event.RESULTADOS_SOLICITADOS) {
+            getContentPane().removeAll();
+            initUI();
+            getContentPane().revalidate();
+            getContentPane().repaint();
+            setVisible(true);
+        }
     }
 
     private void initUI() {
@@ -134,7 +147,10 @@ public class VistaFinal extends JFrame {
         btnSalir.setBorder(BorderFactory.createEmptyBorder(12, 40, 12, 40));
         btnSalir.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnSalir.setAlignmentX(CENTER_ALIGNMENT);
-        btnSalir.addActionListener(e -> control.salir());
+        btnSalir.addActionListener(e -> {
+            control.salir();
+            dispose();
+        });
 
         pnlContenido.add(lblTitulo);
         pnlContenido.add(Box.createVerticalStrut(6));

@@ -1,218 +1,317 @@
 package Model;
 
-import Dominio.ColorJugador;
 import Dominio.IJuego;
-import Dominio.Jugada;
 import Dominio.Jugador;
-import Dominio.PuntoSeleccionado;
 import Dominio.ResultadoVotacion;
 import Dominio.Voto;
-import aplicacion.CoordinadorJuego;
 import dto.JugadaDTO;
 import dto.JugadorPanelDTO;
 import dto.JugadorTableroDTO;
 import dto.SeleccionDTO;
 import dto.VotacionDTO;
-import java.awt.Color;
-import java.util.ArrayList;
+import eventos.Event;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import javax.swing.SwingUtilities;
 
 /**
+ * Modelo de la pantalla de partida de UN jugador.
+ *
+ * Flujo: Partida -> actualizar(Event) -> este Modelo relee el dominio y reemplaza los DTOs
+ * afectados -> avisa a sus Vistas con el mismo evento -> la Vista consulta con los get (que solo
+ * devuelven lo ya guardado, no vuelven a tocar el dominio).
  *
  * @author luisb
  */
 public class ModeloJuego implements ObserverDominio, IConsultaJugadores, IConsultaTablero, IConsultaVotacion {
-    
-    private CoordinadorJuego coordinador;
-    private EsquemaColores colores;
-    private String jugadorLocal;
-    private IJuego dominio;
-    private List<ObserverModeloJuego> observadores;
-    private boolean finalIniciado;
 
-    public ModeloJuego(CoordinadorJuego coordinador, EsquemaColores colores, String jugadorLocal, IJuego dominio) {
-        this.coordinador = coordinador;
-        this.colores = colores;
-        this.jugadorLocal = jugadorLocal;
+    private final Session session;
+    private final IJuego dominio;
+    private final List<ObserverModelo> observadores;
+
+    // Datos visuales: DTOs ya armados, nunca entidades del dominio.
+    private List<JugadorPanelDTO> jugadoresPanel = List.of();
+    private List<JugadaDTO> jugadas = List.of();
+    private SeleccionDTO seleccion;
+    private VotacionDTO votacion = new VotacionDTO(ResultadoVotacion.SIN_VOTACION, 0, 0, false);
+    private int dimension;
+
+    /** true desde que arranca la partida hasta que este jugador sale de ella o pasa a resultados. */
+    private boolean activo;
+    /** true mientras corre MI propio abandono (sus eventos llegan antes de que regrese la llamada). */
+    private boolean abandonando;
+    private boolean finalSolicitado;
+
+    public ModeloJuego(IJuego dominio, Session session) {
+        this.session = session;
         this.dominio = dominio;
         this.observadores = new CopyOnWriteArrayList<>();
     }
-    
-    public void suscribir(ObserverModeloJuego obs) {
-        if (!observadores.contains(obs)) {
+
+    public void suscribir(ObserverModelo obs) {
+        if (obs != null && !observadores.contains(obs)) {
             observadores.add(obs);
         }
     }
-    
+
+    // ------------------------------------------------------------------
+    // Control -> Modelo (comandos). Las excepciones del dominio suben hasta la Vista.
+    // ------------------------------------------------------------------
+
     public void seleccionarPunto(int x, int y) throws Exception {
-        dominio.seleccionarPunto(x, y, jugadorLocal);
+        dominio.seleccionarPunto(x, y, session.getJugadorLocal());
     }
-    
-    public void abandonarJuego() throws Exception {
-        dominio.abandonar(jugadorLocal);
-        coordinador.abandonarPartida(this);
-    }
-    
-    public void proponerFin() throws Exception {
-        dominio.proponerFin(jugadorLocal);
-    }
-    
-    public void votarFin(Voto voto) throws Exception {
-        dominio.votar(voto, jugadorLocal);
-    }
-    
+
     /**
-     * Pasa a la pantalla de resultados. Solo se hace una vez por jugador.
+     * La salida se reclama antes de avisar: así mis otros modelos (el de registro) ya me ven
+     * fuera cuando llega el evento de mi abandono. Si el dominio rechaza, se devuelve.
      */
-    public void verResultados() {
-        if (!finalIniciado) {
-            finalIniciado = true;
-            coordinador.iniciarFinalPartida(this, jugadorLocal, colores);
+    public void abandonarJuego() throws Exception {
+        String nombre = session.getJugadorLocal();
+        session.setJugadorLocal(null);
+        abandonando = true;
+        try {
+            dominio.abandonar(nombre);
+        } catch (Exception e) {
+            session.setJugadorLocal(nombre);
+            throw e;
+        } finally {
+            abandonando = false;
         }
     }
-    
-    private boolean sigoEnLaPartida() {
-        try {
-            for (Jugador jugador : dominio.getJugadores()) {
-                if (jugador.getNombre().equalsIgnoreCase(jugadorLocal)) {
-                    return true;
+
+    public void proponerFin() throws Exception {
+        dominio.proponerFin(session.getJugadorLocal());
+    }
+
+    public void votarFin(Voto voto) throws Exception {
+        dominio.votar(voto, session.getJugadorLocal());
+    }
+
+    /**
+     * Pasa este jugador a la pantalla de resultados. Solo se hace una vez, y solo si sigue en la
+     * partida. La Vista de la partida se oculta y ModeloFinal arma los resultados.
+     */
+    public void verResultados() {
+        if (!activo || finalSolicitado) {
+            return;
+        }
+        finalSolicitado = true;
+        activo = false;
+        notificarVistas(Event.RESULTADOS_SOLICITADOS);
+    }
+
+    // ------------------------------------------------------------------
+    // Vista -> Modelo (consultas): solo devuelven lo ya guardado
+    // ------------------------------------------------------------------
+
+    public boolean isActivo() {
+        return activo;
+    }
+
+    /** Se deriva de la lista del panel: no se guarda aparte. */
+    @Override
+    public JugadorPanelDTO getJugadorEnTurno() {
+        for (JugadorPanelDTO jugador : jugadoresPanel) {
+            if (jugador.isEnTurno()) {
+                return jugador;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public JugadorTableroDTO getJugadorEnTurnoTablero() {
+        JugadorPanelDTO enTurno = getJugadorEnTurno();
+        return enTurno == null ? null : new JugadorTableroDTO(enTurno.getColor(), enTurno.isEsTu());
+    }
+
+    @Override
+    public List<JugadorPanelDTO> getJugadores() {
+        return jugadoresPanel;
+    }
+
+    @Override
+    public List<JugadaDTO> getJugadas() {
+        return jugadas;
+    }
+
+    /** Se deriva de la lista de jugadas. */
+    @Override
+    public JugadaDTO getUltimaJugada() {
+        return jugadas.isEmpty() ? null : jugadas.get(jugadas.size() - 1);
+    }
+
+    @Override
+    public SeleccionDTO getOnSelect() {
+        return seleccion;
+    }
+
+    @Override
+    public int getDimension() {
+        return dimension;
+    }
+
+    @Override
+    public VotacionDTO getVotacion() {
+        return votacion;
+    }
+
+    // ------------------------------------------------------------------
+    // Dominio -> Modelo
+    //
+    // Eventos que le interesan a la pantalla de partida:
+    //   JUEGO_INICIADO, PUNTO_SELECCIONADO, PUNTO_DESELECCIONADO, LINEA_TRAZADA,
+    //   CAMBIO_TURNO, JUGADOR_ABANDONO, VOTO_REGISTRADO, JUEGO_TERMINADO.
+    // No le interesa JUGADOR_REGISTRADO (es del lobby).
+    // ------------------------------------------------------------------
+
+    @Override
+    public void actualizar(Event evento) {
+        switch (evento) {
+            case JUEGO_INICIADO -> {
+                if (!sigoEnLaPartida()) {
+                    return;                      // no entré a esta partida (p. ej. abandoné en el lobby)
+                }
+                activo = true;
+                finalSolicitado = false;
+                dimension = dominio.getDimension();
+                refrescarPanel();
+                refrescarJugadas();
+                refrescarSeleccion();
+                refrescarVotacion();
+            }
+            case PUNTO_SELECCIONADO, PUNTO_DESELECCIONADO -> {
+                if (!activo) {
+                    return;
+                }
+                refrescarSeleccion();
+            }
+            case LINEA_TRAZADA -> {
+                if (!activo) {
+                    return;
+                }
+                refrescarJugadas();
+                refrescarPanel();                // cambian los puntajes
+                refrescarSeleccion();            // el dominio limpia la selección al jugar
+            }
+            case CAMBIO_TURNO -> {
+                if (!activo) {
+                    return;
+                }
+                refrescarPanel();
+                refrescarSeleccion();
+            }
+            case JUGADOR_ABANDONO -> {
+                if (abandonando) {
+                    activo = false;              // el que salió fui yo: aviso y dejo de reaccionar
+                } else if (!activo) {
+                    return;                      // abandono del lobby: no es de esta pantalla
+                } else {
+                    refrescarPanel();
+                    refrescarJugadas();          // abandonar deshace las líneas de ese jugador
+                    refrescarSeleccion();
+                    refrescarVotacion();
                 }
             }
+            case VOTO_REGISTRADO -> {
+                if (!activo) {
+                    return;                      // voto del lobby: no es de esta pantalla
+                }
+                refrescarVotacion();
+            }
+            case JUEGO_TERMINADO -> {
+                if (!activo) {
+                    return;
+                }
+                refrescarPanel();
+                refrescarVotacion();
+                notificarVistas(evento);
+                // Si terminó por acuerdo, primero se ve el aviso y el jugador pasa a resultados
+                // desde la Vista; en cualquier otro caso se pasa de inmediato.
+                if (votacion.getResultado() != ResultadoVotacion.GANO_A_FAVOR) {
+                    verResultados();
+                }
+                return;
+            }
+            default -> {
+                return;                          // no es de esta pantalla
+            }
+        }
+        notificarVistas(evento);
+    }
+
+    // ------------------------------------------------------------------
+    // Refrescos: cada uno relee el dominio y REEMPLAZA su DTO completo
+    // ------------------------------------------------------------------
+
+    private void refrescarPanel() {
+        try {
+            jugadoresPanel = DTOMapper.toPanelDTO(dominio.getJugadores(), session.getJugadorLocal(),
+                    dominio.getJugadorEnTurno(), session.getColores());
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return false;
-    }
-    
-    @Override
-    public JugadorPanelDTO getJugadorEnTurno() throws Exception {
-        Jugador jugador = dominio.getJugadorEnTurno();
-        boolean esTu = jugador.getNombre().equalsIgnoreCase(jugadorLocal);
-        return DTOMapper.toPanelDTO(jugador, esTu, true, colores);
-    }
-    
-    @Override
-    public JugadorTableroDTO getJugadorEnTurnoTablero() throws Exception {
-        Jugador jugador = dominio.getJugadorEnTurno();
-        boolean esTu = jugador.getNombre().equalsIgnoreCase(jugadorLocal);
-        return new JugadorTableroDTO(colores.resolver(jugador.getColor()), esTu);
     }
 
-    @Override
-    public List<JugadorPanelDTO> getJugadores() throws Exception {
-        List<Jugador> jugadores = dominio.getJugadores();
-        Jugador jugadorEnTurno = dominio.getJugadorEnTurno();
-        return DTOMapper.toPanelDTO(jugadores, jugadorLocal, jugadorEnTurno, colores);
+    private void refrescarJugadas() {
+        try {
+            jugadas = DTOMapper.toJugadasDTO(dominio.getJugadas(), session.getColores());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    @Override
-    public JugadaDTO getUltimaJugada() throws Exception {
-        Jugada jugada = dominio.getUltimaJugada();
-        return DTOMapper.toJugadaDTO(jugada, colores);
+    private void refrescarSeleccion() {
+        try {
+            Jugador turno = dominio.getJugadorEnTurno();
+            seleccion = (turno == null) ? null
+                    : DTOMapper.toSeleccionDTO(dominio.getPuntoSeleccionado(),
+                            session.getColores().resolver(turno.getColor()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    @Override
-    public List<JugadaDTO> getJugadas() throws Exception {
-        List<Jugada> jugadas = dominio.getJugadas();
-        return DTOMapper.toJugadasDTO(jugadas, colores);
+    private void refrescarVotacion() {
+        try {
+            votacion = DTOMapper.toVotacionDTO(dominio.getResultadoVotacion(), dominio.getVotacion(), buscarLocal());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    @Override
-    public SeleccionDTO getOnSelect() throws Exception {
-        ColorJugador color = dominio.getJugadorEnTurno().getColor();
-        PuntoSeleccionado seleccion = dominio.getPuntoSeleccionado();
-        return DTOMapper.toSeleccionDTO(seleccion, colores.resolver(color));
-    }
-    
-    @Override
-    public VotacionDTO getVotacion() throws Exception {
-        Jugador local = null;
+    // ------------------------------------------------------------------
+    // Utilidades internas
+    // ------------------------------------------------------------------
 
+    private Jugador buscarLocal() throws Exception {
+        String local = session.getJugadorLocal();
+        if (local == null) {
+            return null;
+        }
         for (Jugador jugador : dominio.getJugadores()) {
-            if (jugador.getNombre().equalsIgnoreCase(jugadorLocal)) {
-                local = jugador;
+            if (jugador.getNombre().equalsIgnoreCase(local)) {
+                return jugador;
             }
         }
-
-        return DTOMapper.toVotacionDTO(dominio.getResultadoVotacion(), dominio.getVotacion(), local);
-    }
-    
-    // ------------------------------------------------------------------
-    // IMPLEMENTACIÓN DE NOTIFICACIONES (ObserverDominio -> ObserverModeloJuego)
-    // ------------------------------------------------------------------
-
-    @Override
-    public void notificarSeleccion() {
-        SwingUtilities.invokeLater(() -> {
-            for (ObserverModeloJuego obs : observadores) {
-                obs.notificarSeleccion();
-            }
-        });
+        return null;
     }
 
-    @Override
-    public void notificarDeseleccion() {
-        SwingUtilities.invokeLater(() -> {
-            for (ObserverModeloJuego obs : observadores) {
-                obs.notificarDeseleccion();
-            }
-        });
-    }
-
-    @Override
-    public void notificarJugada() {
-        SwingUtilities.invokeLater(() -> {
-            for (ObserverModeloJuego obs : observadores) {
-                obs.notificarJugada();
-            }
-        });
-    }
-
-    @Override
-    public void notificarCambioTurno() {
-        SwingUtilities.invokeLater(() -> {
-            for (ObserverModeloJuego obs : observadores) {
-                obs.notificarCambioTurno();
-            }
-        });
-    }
-
-    @Override
-    public void notificarAbandono() {
-        SwingUtilities.invokeLater(() -> {
-            for (ObserverModeloJuego obs : observadores) {
-                obs.notificarAbandono();
-            }
-        });
-    }
-
-    @Override
-    public void notificarRegistro() {
-        // No aplica directamente en esta pantalla, se deja vacío
-    }
-
-    @Override
-    public void notificarComienzo() {
-        // Opcional
-    }
-
-    @Override
-    public void notificarFin() {
-        // Si terminó por votación, el jugador ve primero la pantalla del acuerdo.
-        // Quien ya abandonó no tiene resultados que ver.
-        if (dominio.getResultadoVotacion() == ResultadoVotacion.GANO_A_FAVOR || !sigoEnLaPartida()) {
-            return;
+    private boolean sigoEnLaPartida() {
+        try {
+            return buscarLocal() != null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
-        SwingUtilities.invokeLater(this::verResultados);
     }
 
-    @Override
-    public void notificarVoto() {
+    /** Las Vistas se pintan en el hilo de Swing. */
+    private void notificarVistas(Event evento) {
         SwingUtilities.invokeLater(() -> {
-            for (ObserverModeloJuego obs : observadores) {
-                obs.notificarVoto();
+            for (ObserverModelo obs : observadores) {
+                obs.actualizar(evento);
             }
         });
     }

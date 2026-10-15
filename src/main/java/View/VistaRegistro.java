@@ -14,7 +14,8 @@ import Dominio.Avatar;
 import Dominio.ColorJugador;
 import Model.EsquemaColores;
 import Model.IConsultaRegistro;
-import Model.ObserverModeloRegistro;
+import Model.ObserverModelo;
+import eventos.Event;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -22,7 +23,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-public class VistaRegistro extends JFrame implements ObserverModeloRegistro {
+public class VistaRegistro extends JFrame implements ObserverModelo {
 
     private static final int TAM_ICONO_AVATAR = 48;
 
@@ -58,29 +59,23 @@ public class VistaRegistro extends JFrame implements ObserverModeloRegistro {
         cargarEsquemasColor();
     }
 
-    /** Deja de observar al modelo cuando la ventana se cierra o el coordinador la reemplaza. */
+    // ------------------------------------------------ ObserverModelo
+
+    /**
+     * Reacciona a los eventos que reenvía ModeloRegistro. Cualquier registro o abandono cambia los
+     * avatares libres; la ventana se muestra mientras ESTE jugador no esté registrado.
+     */
     @Override
-    public void dispose() {
-        super.dispose();
-    }
-
-    // ------------------------------------------------ ObserverModeloRegistro
-
-    @Override
-    public void actualizarRegistro() {
-        refrescarAvatares();
-    }
-
-    @Override
-    public void actualizarAbandono() {
-        refrescarAvatares();
-    }
-
-    private void refrescarAvatares() {
-        if (SwingUtilities.isEventDispatchThread()) {
-            cargarAvataresDisponibles();
-        } else {
-            SwingUtilities.invokeLater(this::cargarAvataresDisponibles);
+    public void actualizar(Event evento) {
+        switch (evento) {
+            case JUGADOR_REGISTRADO, JUGADOR_ABANDONO -> {
+                cargarAvataresDisponibles();
+                boolean mostrar = !modelo.estoyRegistrado();
+                if (isVisible() != mostrar) {
+                    setVisible(mostrar);
+                }
+            }
+            default -> { }
         }
     }
 
@@ -246,7 +241,7 @@ public class VistaRegistro extends JFrame implements ObserverModeloRegistro {
 
         try {
             control.manejarRegistro(nombre, avatarSeleccionado, esquemaSeleccionado);
-            JOptionPane.showMessageDialog(this, "¡Ingreso exitoso!");
+            // Si el dominio lo acepta, el evento JUGADOR_REGISTRADO oculta esta ventana y abre el lobby.
         } catch (Exception e) {
             String detalle = (e.getMessage() != null && !e.getMessage().isBlank())
                     ? e.getMessage()

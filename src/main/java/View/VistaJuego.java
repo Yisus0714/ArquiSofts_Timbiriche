@@ -1,31 +1,32 @@
 package View;
 
-import Control.EjercerTurnoControl;
+import Control.ControlEjercerTurno;
 import Model.IConsultaJugadores;
 import Model.IConsultaTablero;
 import Model.IConsultaVotacion;
 import Model.ModeloJuego;
-import Model.ObserverModeloJuego;
+import Model.ObserverModelo;
+import eventos.Event;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
-public class VistaJuego extends JFrame implements ObserverModeloJuego {
+public class VistaJuego extends JFrame implements ObserverModelo {
 
     private static final String PANTALLA_JUEGO = "JUEGO";
     private static final String PANTALLA_ABANDONO = "ABANDONO";
     private static final String PANTALLA_VOTACION = "VOTACION";
 
     private final ModeloJuego modelo;
-    private final EjercerTurnoControl control;
+    private final ControlEjercerTurno control;
     private final PanelJugadores panelJugadores;
     private final TableroPanel tableroPanel;
     private final PanelVotacion panelVotacion;
     private final CardLayout distribucionPantallas = new CardLayout();
     private final JPanel pnlPantallas = new JPanel(distribucionPantallas);
 
-    public VistaJuego(ModeloJuego modelo, EjercerTurnoControl control, int dimensionTablero) {
+    public VistaJuego(ModeloJuego modelo, ControlEjercerTurno control) {
         this.modelo = modelo;
         this.control = control;
 
@@ -37,7 +38,7 @@ public class VistaJuego extends JFrame implements ObserverModeloJuego {
 
         // Inicializar componentes principales con sus respectivas interfaces de consulta
         this.panelJugadores = new PanelJugadores((IConsultaJugadores) modelo);
-        this.tableroPanel = new TableroPanel((IConsultaTablero) modelo, control, dimensionTablero);
+        this.tableroPanel = new TableroPanel((IConsultaTablero) modelo, control);
         this.panelVotacion = new PanelVotacion((IConsultaVotacion) modelo, control, this::mostrarJuego);
 
         initUI();
@@ -141,45 +142,46 @@ public class VistaJuego extends JFrame implements ObserverModeloJuego {
         distribucionPantallas.show(pnlPantallas, PANTALLA_JUEGO);
     }
 
-    // Métodos delegados a los observadores internos
-    @Override
-    public void notificarSeleccion() {
-        panelJugadores.notificarSeleccion();
-        tableroPanel.notificarSeleccion();
-    }
+    // ------------------------------------------------ ObserverModelo
 
+    /**
+     * Reacciona a los eventos que reenvía ModeloJuego. La ventana aparece cuando la partida inicia
+     * y se oculta cuando este jugador la abandona o pasa a los resultados.
+     */
     @Override
-    public void notificarDeseleccion() {
-        panelJugadores.notificarDeseleccion();
-        tableroPanel.notificarDeseleccion();
-    }
-
-    @Override
-    public void notificarJugada() {
-        panelJugadores.notificarJugada();
-        tableroPanel.notificarJugada();
-    }
-
-    @Override
-    public void notificarCambioTurno() {
-        panelJugadores.notificarCambioTurno();
-        tableroPanel.notificarCambioTurno();
-    }
-
-    @Override
-    public void notificarAbandono() {
-        panelJugadores.notificarAbandono();
-        tableroPanel.notificarAbandono();
-    }
-
-    @Override
-    public void notificarVoto() {
-        panelJugadores.notificarVoto();
-        tableroPanel.notificarVoto();
-        if (panelVotacion.actualizarDatos()) {
-            distribucionPantallas.show(pnlPantallas, PANTALLA_VOTACION);
-        } else {
-            mostrarJuego();
+    public void actualizar(Event evento) {
+        switch (evento) {
+            case JUEGO_INICIADO -> {
+                sincronizarPaneles();
+                mostrarJuego();
+                if (!isVisible()) {
+                    setVisible(true);
+                }
+            }
+            case PUNTO_SELECCIONADO, PUNTO_DESELECCIONADO, LINEA_TRAZADA, CAMBIO_TURNO, JUEGO_TERMINADO ->
+                sincronizarPaneles();
+            case JUGADOR_ABANDONO -> {
+                if (!modelo.isActivo()) {
+                    setVisible(false);           // el que salió fui yo
+                    return;
+                }
+                sincronizarPaneles();
+            }
+            case VOTO_REGISTRADO -> {
+                sincronizarPaneles();
+                if (panelVotacion.actualizarDatos()) {
+                    distribucionPantallas.show(pnlPantallas, PANTALLA_VOTACION);
+                } else {
+                    mostrarJuego();
+                }
+            }
+            case RESULTADOS_SOLICITADOS -> setVisible(false);
+            default -> { }
         }
+    }
+
+    private void sincronizarPaneles() {
+        panelJugadores.actualizarDatos();
+        tableroPanel.sincronizarEstado();
     }
 }

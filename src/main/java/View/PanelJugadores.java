@@ -5,7 +5,6 @@
 package View;
 
 import Model.IConsultaJugadores;
-import Model.ObserverModeloJuego;
 import dto.JugadorPanelDTO;
 
 import javax.swing.*;
@@ -13,7 +12,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.List;
 
-public class PanelJugadores extends JPanel implements ObserverModeloJuego {
+public class PanelJugadores extends JPanel {
 
     private final IConsultaJugadores consultaJugadores;
     private JPanel pnlContenedorCartas;
@@ -139,16 +138,4 @@ public class PanelJugadores extends JPanel implements ObserverModeloJuego {
         return luminancia > 0.6 ? new Color(15, 23, 42) : Color.WHITE;
     }
 
-    @Override
-    public void notificarSeleccion() { actualizarDatos(); }
-    @Override
-    public void notificarDeseleccion() { actualizarDatos(); }
-    @Override
-    public void notificarJugada() { actualizarDatos(); }
-    @Override
-    public void notificarCambioTurno() { actualizarDatos(); }
-    @Override
-    public void notificarAbandono() { actualizarDatos(); }
-    @Override
-    public void notificarVoto() { }
 }

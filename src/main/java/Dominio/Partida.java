@@ -5,6 +5,7 @@
 package Dominio;
 
 import Model.ObserverDominio;
+import eventos.Event;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -46,6 +47,10 @@ public class Partida implements IRegistro, IJuego, ILobby, IFinal {
             }
         }
         return null;
+    }
+    
+    public int getDimension(){
+        return tablero.getDimension();
     }
     
     
@@ -106,14 +111,10 @@ public class Partida implements IRegistro, IJuego, ILobby, IFinal {
    
     
 
-    /** Avisa a cada observador por separado: si uno falla, los demás igual se enteran y el dominio no se rompe. */
-    private void notificar(java.util.function.Consumer<ObserverDominio> evento) {
-        for (ObserverDominio observador : observadores) {
-            try {
-                evento.accept(observador);
-            } catch (RuntimeException ex) {
-                ex.printStackTrace();
-            }
+    /** Avisa a cada observador suscrito del hecho ocurrido; ellos consultan el detalle. */
+    private void notificar(Event evento) {
+        for (ObserverDominio obs : observadores) {
+            obs.actualizar(evento);
         }
     }
 
@@ -129,18 +130,13 @@ public class Partida implements IRegistro, IJuego, ILobby, IFinal {
             estado = EstadoPartida.TERMINADA;
         }
 
-        notificar(o -> o.notificarVoto());
+        notificar(Event.VOTO_REGISTRADO);
 
         if (estado == EstadoPartida.TERMINADA) {
-            notificar(o -> o.notificarFin());
+            notificar(Event.JUEGO_TERMINADO);
         }
     }
 
-    private void notificarRegistro(){
-        notificar(o -> o.notificarRegistro());
-    }
-    
-    
     public void suscribir(ObserverDominio observador) {
         observadores.add(observador);
     }
@@ -170,7 +166,7 @@ public class Partida implements IRegistro, IJuego, ILobby, IFinal {
         Collections.shuffle(jugadores);
         turnoActual = jugadores.get(0);
         
-        notificar(o -> o.notificarComienzo());
+        notificar(Event.JUEGO_INICIADO);
         
     
     }
@@ -200,7 +196,7 @@ public class Partida implements IRegistro, IJuego, ILobby, IFinal {
         return estado;
     }
     
-    private int calcularDimension() {
+    public int calcularDimension() {
         return ((jugadores.size() - 1)*10);
     }
     
@@ -278,7 +274,7 @@ public class Partida implements IRegistro, IJuego, ILobby, IFinal {
         
         jugadores.add(jugadorNuevo);
         
-        notificarRegistro();
+        notificar(Event.JUGADOR_REGISTRADO);
         
         if(verificarComienzo()){
             empezarJuego();
@@ -308,7 +304,7 @@ public class Partida implements IRegistro, IJuego, ILobby, IFinal {
         if(estado == EstadoPartida.PREPARANDO) {
             votacion.quitarVoto(jugador);
             jugadores.remove(jugador);
-            notificar(o -> o.notificarAbandono());
+            notificar(Event.JUGADOR_ABANDONO);
             if (verificarComienzo()) {
                 empezarJuego();
             }
@@ -332,17 +328,17 @@ public class Partida implements IRegistro, IJuego, ILobby, IFinal {
             onSelect = tablero.seleccionarPunto(sel.getFila(), sel.getColumna());
         }
 
-        notificar(o -> o.notificarAbandono());
+        notificar(Event.JUGADOR_ABANDONO);
         if(teniaSeleccion) {
-            notificar(o -> o.notificarDeseleccion());
+            notificar(Event.PUNTO_DESELECCIONADO);
         }
 
         if(jugadores.size() == 1) {
             estado = EstadoPartida.TERMINADA;
-            notificar(o -> o.notificarFin());
+            notificar(Event.JUEGO_TERMINADO);
         } else {
             if(teniaElTurno) {
-                notificar(o -> o.notificarCambioTurno());
+                notificar(Event.CAMBIO_TURNO);
             }
             // Si había una votación abierta, el voto del que se fue deja de contar
             if(resultadoFin == ResultadoVotacion.EN_PROCESO) {
@@ -392,7 +388,7 @@ public class Partida implements IRegistro, IJuego, ILobby, IFinal {
         if(estado == EstadoPartida.EN_CURSO) {
             evaluarVotacionFin();
         } else {
-            notificar(o -> o.notificarVoto());
+            notificar(Event.VOTO_REGISTRADO);
         }
         
         if (estado == EstadoPartida.PREPARANDO && verificarComienzo()) {
@@ -463,7 +459,7 @@ public class Partida implements IRegistro, IJuego, ILobby, IFinal {
             
             onSelect = null;
             
-            notificar(o -> o.notificarDeseleccion());
+            notificar(Event.PUNTO_DESELECCIONADO);
         } else if(estaIntentandoJugada(x, y)) {
             
             Punto punto = onSelect.getPutnoJugado();
@@ -471,16 +467,16 @@ public class Partida implements IRegistro, IJuego, ILobby, IFinal {
             jugadas.add(jugada);
             onSelect = null;
             
-            notificar(o -> o.notificarJugada());
+            notificar(Event.LINEA_TRAZADA);
             
             if(tablero.estaCompleto()) {
                 estado = EstadoPartida.TERMINADA;
-                notificar(o -> o.notificarFin());
+                notificar(Event.JUEGO_TERMINADO);
             }
             
             if(jugada.getRecuadrosCompletados().isEmpty()) {
                 cambiarTurno();
-                notificar(o -> o.notificarCambioTurno());
+                notificar(Event.CAMBIO_TURNO);
                 
             }
             
@@ -489,7 +485,7 @@ public class Partida implements IRegistro, IJuego, ILobby, IFinal {
             
             onSelect = tablero.seleccionarPunto(x, y);
             
-            notificar(o -> o.notificarSeleccion());
+            notificar(Event.PUNTO_SELECCIONADO);
             
         } else {
             throw new Exception("Tu vista está desactualizada");
@@ -522,7 +518,7 @@ public class Partida implements IRegistro, IJuego, ILobby, IFinal {
 
         votacion.quitarVoto(jugador);
 
-        notificar(o -> o.notificarVoto());
+        notificar(Event.VOTO_REGISTRADO);
     }
 
 
@@ -607,20 +603,3 @@ public class Partida implements IRegistro, IJuego, ILobby, IFinal {
     
 
 }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-

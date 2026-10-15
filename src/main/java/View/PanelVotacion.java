@@ -4,7 +4,7 @@
  */
 package View;
 
-import Control.EjercerTurnoControl;
+import Control.ControlEjercerTurno;
 import Dominio.ResultadoVotacion;
 import Dominio.Voto;
 import Model.IConsultaVotacion;
@@ -24,7 +24,7 @@ public class PanelVotacion extends PanelMensaje {
     private static final int SEGUNDOS_ESPERA = 3;
 
     private final IConsultaVotacion consultaVotacion;
-    private final EjercerTurnoControl control;
+    private final ControlEjercerTurno control;
     private final Runnable alVolver;
 
     private Timer temporizador;
@@ -32,7 +32,7 @@ public class PanelVotacion extends PanelMensaje {
     private int segundosRestantes;
     private JLabel lblCuentaRegresiva;
 
-    public PanelVotacion(IConsultaVotacion consultaVotacion, EjercerTurnoControl control, Runnable alVolver) {
+    public PanelVotacion(IConsultaVotacion consultaVotacion, ControlEjercerTurno control, Runnable alVolver) {
         this.consultaVotacion = consultaVotacion;
         this.control = control;
         this.alVolver = alVolver;

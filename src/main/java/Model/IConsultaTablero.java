@@ -5,7 +5,6 @@
 package Model;
 
 import dto.JugadaDTO;
-import dto.JugadorLobbyDTO;
 import dto.JugadorTableroDTO;
 import dto.SeleccionDTO;
 import java.util.List;
@@ -20,6 +19,9 @@ public interface IConsultaTablero {
     public JugadaDTO getUltimaJugada() throws Exception;
     public List<JugadaDTO> getJugadas() throws Exception;
     public SeleccionDTO getOnSelect() throws Exception;
+
+    /** Lado del tablero en puntos; 0 mientras la partida no ha iniciado. */
+    public int getDimension();
     
     
     

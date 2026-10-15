@@ -1,18 +1,14 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
- */
 package Model;
 
 import dto.JugadorLobbyDTO;
 import java.util.List;
 
 /**
- *
- * @author luisb
+ * Lo que la Vista del lobby puede consultar al Modelo.
  */
 public interface IConsultaLobby {
-    
-    public List<JugadorLobbyDTO> getJugadores() throws Exception;    
+
+    public List<JugadorLobbyDTO> getJugadores() throws Exception;
+    public boolean isActivo();
     
 }

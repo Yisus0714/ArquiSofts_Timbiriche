@@ -6,9 +6,7 @@ package Control;
 
 import Dominio.Avatar;
 import Model.EsquemaColores;
-import Model.IConsultaRegistro;
 import Model.ModeloRegistro;
-import View.VistaLobby;
 
 /**
  *

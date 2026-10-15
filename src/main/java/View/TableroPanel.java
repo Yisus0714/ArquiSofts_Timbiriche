@@ -1,8 +1,7 @@
 package View;
 
-import Control.EjercerTurnoControl;
+import Control.ControlEjercerTurno;
 import Model.IConsultaTablero;
-import Model.ObserverModeloJuego;
 import dto.*;
 
 import javax.swing.*;
@@ -11,11 +10,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-public class TableroPanel extends JPanel implements ObserverModeloJuego {
+public class TableroPanel extends JPanel {
 
     private final IConsultaTablero consultaTablero;
-    private final EjercerTurnoControl control;
-    private final int dimension;
+    private final ControlEjercerTurno control;
+    /** Lado del tablero en puntos; se lee del Modelo cuando inicia la partida. */
+    private int dimension;
 
     private Color colorMarco = new Color(37, 99, 235);
     private boolean esTurnoLocal = false;
@@ -23,10 +23,9 @@ public class TableroPanel extends JPanel implements ObserverModeloJuego {
     private SeleccionDTO seleccionActual = null;
     private List<JugadaDTO> jugadasRealizadas = null;
 
-    public TableroPanel(IConsultaTablero consultaTablero, EjercerTurnoControl control, int dimension) {
+    public TableroPanel(IConsultaTablero consultaTablero, ControlEjercerTurno control) {
         this.consultaTablero = consultaTablero;
         this.control = control;
-        this.dimension = dimension;
 
         setBackground(Color.WHITE);
         setPreferredSize(new Dimension(600, 600));
@@ -53,6 +52,7 @@ public class TableroPanel extends JPanel implements ObserverModeloJuego {
             }
             this.seleccionActual = consultaTablero.getOnSelect();
             this.jugadasRealizadas = consultaTablero.getJugadas();
+            this.dimension = consultaTablero.getDimension();
             repaint();
         } catch (Exception e) {
             // Manejo de excepción
@@ -60,7 +60,7 @@ public class TableroPanel extends JPanel implements ObserverModeloJuego {
     }
 
     private void manejarClickTablero(int mouseX, int mouseY) {
-        if (!esTurnoLocal) return;
+        if (!esTurnoLocal || dimension < 2) return;
 
         int panelWidth = getWidth();
         int panelHeight = getHeight();
@@ -129,6 +129,9 @@ public class TableroPanel extends JPanel implements ObserverModeloJuego {
         g2.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         g2.drawRoundRect(startX - 20, startY - 20, boardSize + 40, boardSize + 40, 24, 24);
 
+        if (dimension < 2) {
+            return;                      // aún no hay partida que dibujar
+        }
         double spacing = (double) boardSize / (dimension - 1);
 
         // 2. Dibujar Recuadros Completados (Independientes de las líneas)
@@ -224,16 +227,4 @@ public class TableroPanel extends JPanel implements ObserverModeloJuego {
         }
     }
 
-    @Override
-    public void notificarSeleccion() { sincronizarEstado(); }
-    @Override
-    public void notificarDeseleccion() { sincronizarEstado(); }
-    @Override
-    public void notificarJugada() { sincronizarEstado(); }
-    @Override
-    public void notificarCambioTurno() { sincronizarEstado(); }
-    @Override
-    public void notificarAbandono() { sincronizarEstado(); }
-    @Override
-    public void notificarVoto() { }
 }

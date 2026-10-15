@@ -1,19 +1,15 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
- */
 package Model;
 
 import Dominio.Avatar;
 import java.util.List;
 
 /**
- *
- * @author luisb
+ * Lo que la Vista de registro puede consultar al Modelo.
  */
 public interface IConsultaRegistro {
-    
+
     public List<Avatar> getAvataresDisponibles();
-    
-    
+
+    /** true si este jugador ya está dado de alta en la partida (la Vista de registro se oculta). */
+    public boolean estoyRegistrado();
 }

@@ -4,7 +4,7 @@
  */
 package View;
 
-import Control.EjercerTurnoControl;
+import Control.ControlEjercerTurno;
 import javax.swing.*;
 
 /**
@@ -14,10 +14,10 @@ import javax.swing.*;
  */
 public class PanelAbandono extends PanelMensaje {
 
-    private final EjercerTurnoControl control;
+    private final ControlEjercerTurno control;
     private final Runnable alVolver;
 
-    public PanelAbandono(EjercerTurnoControl control, Runnable alVolver) {
+    public PanelAbandono(ControlEjercerTurno control, Runnable alVolver) {
         this.control = control;
         this.alVolver = alVolver;
         initUI();

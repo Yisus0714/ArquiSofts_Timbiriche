@@ -4,20 +4,14 @@
  */
 package Model;
 
+import eventos.Event;
+
 /**
  *
  * @author luisb
  */
 public interface ObserverDominio {
     
-    public void notificarRegistro(); 
-    public void notificarComienzo();
-    public void notificarSeleccion();
-    public void notificarDeseleccion();
-    public void notificarJugada();
-    public void notificarCambioTurno();
-    public void notificarAbandono();
-    public void notificarFin();
-    public void notificarVoto();
+    public void actualizar(Event evento);
         
 }

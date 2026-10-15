@@ -24,5 +24,6 @@ public interface IJuego {
     public Jugada getUltimaJugada() throws Exception;
     public Votacion getVotacion();
     public ResultadoVotacion getResultadoVotacion();
+    public int getDimension();
     
 }

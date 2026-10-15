@@ -1,35 +1,33 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- */
-
 package com.mycompany.timbiriche_arquisofts;
 
-import Dominio.Avatar;
 import Dominio.Partida;
-import View.VistaLobby;
-import aplicacion.CoordinadorFase;
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.List;
-import javax.swing.ImageIcon;
+import ensamblador.Ensamblador;
 import javax.swing.SwingUtilities;
 
 /**
+ * Punto de entrada: una sola Partida compartida y un conjunto MVC por jugador.
+ * Uso: Timbiriche_Arquisofts [numeroDeJugadores]   (por omisión 3)
  *
  * @author luisb
  */
 public class Timbiriche_Arquisofts {
 
     public static void main(String[] args) {
-    
-        Partida partida = new Partida();
-        
-        CoordinadorFase coordinador = new CoordinadorFase(partida);
-        coordinador.iniciarRegistro();
-        
-        
-        CoordinadorFase coordinador2 = new CoordinadorFase(partida);
-        coordinador2.iniciarRegistro();
+        int jugadores = 2;
+        if (args.length > 0) {
+            try {
+                jugadores = Integer.parseInt(args[0]);
+            } catch (NumberFormatException e) {
+                System.err.println("Número de jugadores inválido, se usarán 3.");
+            }
+        }
+        final int n = jugadores;
+        SwingUtilities.invokeLater(() -> {
+            Partida partida = new Partida();
+            Ensamblador ensamblador = new Ensamblador(partida);
+            for (int i = 0; i < n; i++) {
+                ensamblador.crearJugador();
+            }
+        });
     }
 }
-

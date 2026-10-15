@@ -9,10 +9,11 @@ package View;
  *
  * @author luisb
  */
-import Control.LobbyControl;
+import Control.ControlLobby;
 import Dominio.Voto;
 import Model.IConsultaLobby;
-import Model.ObserverModeloLobby;
+import Model.ObserverModelo;
+import eventos.Event;
 import dto.JugadorLobbyDTO;
 
 import javax.swing.*;
@@ -20,19 +21,19 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.List;
 
-public class VistaLobby extends JFrame implements ObserverModeloLobby {
+public class VistaLobby extends JFrame implements ObserverModelo {
 
-    private final LobbyControl control;
+    private final ControlLobby control;
     private final IConsultaLobby dominio;
 
     private JPanel pnlContenedorJugadores;
 
-    public VistaLobby(LobbyControl control, IConsultaLobby dominio) {
+    public VistaLobby(ControlLobby control, IConsultaLobby dominio) {
         this.control = control;
         this.dominio = dominio;
 
         setTitle("Sala de Espera - Timbiriche");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(850, 650);
         setLocationRelativeTo(null);
         getContentPane().setBackground(Color.WHITE);
@@ -45,43 +46,36 @@ public class VistaLobby extends JFrame implements ObserverModeloLobby {
         }
     }
 
-    @Override
-    public void dispose() {
-        super.dispose();
-    }
+    // ------------------------------------------------ ObserverModelo
 
-    // ------------------------------------------------ ObserverModeloLobby
-
+    /**
+     * Reacciona a los eventos que reenvía ModeloLobby. La ventana se muestra mientras este jugador
+     * está en la sala de espera: el registro propio la abre; el abandono propio o el inicio de la
+     * partida la cierran.
+     */
     @Override
-    public void actualizarAbandono() {
-        refrescarJugadores();
-    }
-
-    @Override
-    public void actualizarRegistro() {
-        refrescarJugadores();
-    }
-
-    @Override
-    public void actualizarVoto() {
-        refrescarJugadores();
+    public void actualizar(Event evento) {
+        switch (evento) {
+            case JUGADOR_REGISTRADO, JUGADOR_ABANDONO, VOTO_REGISTRADO -> {
+                if (!dominio.isActivo()) {
+                    setVisible(false);           // el que salió fui yo
+                    return;
+                }
+                refrescarJugadores();
+                if (!isVisible()) {
+                    setVisible(true);
+                }
+            }
+            case JUEGO_INICIADO -> setVisible(false);
+            default -> { }
+        }
     }
 
     private void refrescarJugadores() {
-        if (SwingUtilities.isEventDispatchThread()) {
-            try {
-                cargarJugadores();
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        } else {
-            SwingUtilities.invokeLater(() -> {
-                try {
-                    cargarJugadores();
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            });
+        try {
+            cargarJugadores();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
