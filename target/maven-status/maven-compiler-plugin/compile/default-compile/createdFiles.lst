@@ -73,6 +73,7 @@ dto/JugadorFinalDTO.class
 View/PanelAbandono.class
 View/PanelJugadores.class
 Model/IConsultaRegistro.class
+View/prueba.class
 Control/ControlRegistro.class
 Dominio/IJuego.class
 Dominio/Orientacion.class
