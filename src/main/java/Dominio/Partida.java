@@ -403,6 +403,7 @@ public class Partida implements IRegistro, IJuego, ILobby, IFinal {
     /**
      * Abre una votación para terminar la partida antes de tiempo.
      * Quien la propone vota a favor automáticamente.
+     * @param nombre
      */
     @Override
     public void proponerFin(String nombre) throws Exception {
@@ -570,6 +571,8 @@ public class Partida implements IRegistro, IJuego, ILobby, IFinal {
 
     /**
      * Jugadores ordenados de mayor a menor puntaje. En caso de empate conservan su orden.
+     * @return 
+     * @throws java.lang.Exception 
      */
     @Override
     public List<Jugador> getClasificacion() throws Exception {
@@ -585,6 +588,8 @@ public class Partida implements IRegistro, IJuego, ILobby, IFinal {
 
     /**
      * Jugadores con el puntaje más alto; hay más de uno cuando empatan.
+     * @return 
+     * @throws java.lang.Exception 
      */
     @Override
     public List<Jugador> getGanadores() throws Exception {

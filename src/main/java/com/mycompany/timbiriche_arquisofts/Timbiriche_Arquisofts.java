@@ -9,6 +9,7 @@ import javax.swing.SwingUtilities;
  * Uso: Timbiriche_Arquisofts [numeroDeJugadores]   (por omisión 3)
  *
  * @author luisb
+ * 
  */
 public class Timbiriche_Arquisofts {
 
