@@ -28,8 +28,7 @@ public class TableroPanel extends JPanel {
         this.control = control;
 
         setBackground(Color.WHITE);
-        setPreferredSize(new Dimension(600, 600));
-        setMaximumSize(new Dimension(650, 650));
+        setPreferredSize(new Dimension(500, 500));
 
         addMouseListener(new MouseAdapter() {
             @Override

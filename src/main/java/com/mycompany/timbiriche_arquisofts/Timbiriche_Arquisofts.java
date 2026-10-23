@@ -19,7 +19,7 @@ public class Timbiriche_Arquisofts {
             try {
                 jugadores = Integer.parseInt(args[0]);
             } catch (NumberFormatException e) {
-                System.err.println("Número de jugadores inválido, se usarán 3.");
+                System.err.println("Número de jugadores inválido, se usarán 2.");
             }
         }
         final int n = jugadores;

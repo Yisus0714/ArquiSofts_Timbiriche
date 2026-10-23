@@ -115,13 +115,12 @@ public class VistaJuego extends JFrame implements ObserverModelo {
         pnlHeader.add(pnlAccionesTop, BorderLayout.EAST);
 
         // --- CONTENEDOR CENTRAL ---
-        JPanel pnlCentro = new JPanel();
+        JPanel pnlCentro = new JPanel(new BorderLayout(0, 15));
         pnlCentro.setLayout(new BoxLayout(pnlCentro, BoxLayout.Y_AXIS));
         pnlCentro.setBackground(new Color(248, 250, 252));
 
-        pnlCentro.add(panelJugadores);
-        pnlCentro.add(Box.createVerticalStrut(15));
-        
+        pnlCentro.add(panelJugadores, BorderLayout.NORTH);
+        pnlCentro.add(tableroPanel, BorderLayout.CENTER);
         // Contenedor para mantener el tablero centrado y con tamaño óptimo
         JPanel pnlTableroWrapper = new JPanel(new GridBagLayout());
         pnlTableroWrapper.setBackground(new Color(248, 250, 252));
