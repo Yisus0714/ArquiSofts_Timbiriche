@@ -19,6 +19,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class Partida implements IRegistro, IJuego, ILobby, IFinal {
     
+    //sout
+    
     private List<ObserverDominio> observadores;
     private Tablero tablero;
     private List<Jugador> jugadores;
